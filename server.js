@@ -20,11 +20,33 @@ const Evento = mongoose.model('Evento', {
   ano: Number
 });
 
+// Criando o "Molde" dos Produtos
+const Produto = mongoose.model('Produto', {
+  titulo: String,
+  preco: String,
+  parcelas: String,
+  imagem: String,
+  descricao: String,
+  linkAfiliado: String,
+  categoria: String,
+  garantia: String
+}, 'produtos'); // Esse 'produtos' força o Mongoose a usar a coleção exata que você criou no Atlas
+
 // --- ROTAS DA API ---
 
 // Rota inicial
 app.get('/', (req, res) => {
   res.send('API da UESM rodando com MongoDB! 🚀');
+});
+
+// Rota de Produtos (Buscando as miçangas, colas, etc)
+app.get('/produtos', async (req, res) => {
+  try {
+    const produtosDoBanco = await Produto.find();
+    res.json(produtosDoBanco);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar produtos no banco" });
+  }
 });
 
 // Rota de Eventos (Agora buscando do Banco de Dados real)
