@@ -6,21 +6,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Tente este link ajustado (usuário correto do seu print)
+// Link do MongoDB Atlas
 const mongoURI = "mongodb+srv://masfgroove2012_db_user:Uesm2026@cluster0.w1odaqz.mongodb.net/uesm?retryWrites=true&w=majority";
 
 mongoose.connect(mongoURI)
   .then(() => console.log("✅ UESM conectada ao MongoDB Atlas!"))
   .catch(err => console.error("❌ Erro ao conectar no banco:", err));
 
-// Criando o "Molde" dos dados (Schema)
+// --- MODELOS (SCHEMAS) ---
+
+// Molde para Acessos (IPs)
+const Acesso = mongoose.model('Acesso', {
+  ip: String,
+  data: { type: Date, default: Date.now },
+  navegador: String
+}, 'acessos');
+
+// Molde para Eventos
 const Evento = mongoose.model('Evento', {
   nome: String,
   escola: String,
   ano: Number
 });
 
-// Criando o "Molde" dos Produtos
+// Molde para Produtos
 const Produto = mongoose.model('Produto', {
   titulo: String,
   preco: String,
@@ -30,7 +39,7 @@ const Produto = mongoose.model('Produto', {
   linkAfiliado: String,
   categoria: String,
   garantia: String
-}, 'produtos'); // Esse 'produtos' força o Mongoose a usar a coleção exata que você criou no Atlas
+}, 'produtos');
 
 // --- ROTAS DA API ---
 
@@ -39,28 +48,48 @@ app.get('/', (req, res) => {
   res.send('API da UESM rodando com MongoDB! 🚀');
 });
 
-// Rota de Produtos (Buscando as miçangas, colas, etc)
+// 1. ROTA PARA SALVAR ACESSO (O React vai chamar essa)
+app.post('/acessos', async (req, res) => {
+  try {
+    const novoAcesso = new Acesso(req.body);
+    await novoAcesso.save();
+    res.status(201).json({ mensagem: "Acesso registrado!" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao registrar acesso" });
+  }
+});
+
+// 2. ROTA PARA VER ACESSOS (Para você consultar quem entrou)
+app.get('/ver-acessos', async (req, res) => {
+  try {
+    const lista = await Acesso.find().sort({ data: -1 });
+    res.json(lista);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar acessos" });
+  }
+});
+
+// Rota de Produtos
 app.get('/produtos', async (req, res) => {
   try {
     const produtosDoBanco = await Produto.find();
     res.json(produtosDoBanco);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar produtos no banco" });
+    res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
 
-// Rota de Eventos (Agora buscando do Banco de Dados real)
+// Rota de Eventos
 app.get('/eventos', async (req, res) => {
   try {
     const eventosDoBanco = await Evento.find();
     res.json(eventosDoBanco);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar dados no banco" });
+    res.status(500).json({ error: "Erro ao buscar eventos" });
   }
 });
 
-// Rota temporária para você CRIAR o primeiro evento via navegador
-// Depois de rodar, acesse: localhost:3000/criar-teste
+// Rota de Teste
 app.get('/criar-teste', async (req, res) => {
   try {
     const novoEvento = new Evento({
