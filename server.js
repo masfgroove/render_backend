@@ -89,7 +89,9 @@ app.get('/eventos', async (req, res) => {
   }
 });
 
-// Rota de Teste
+// --- ROTAS DE TESTE (CRIAM DADOS NO MONGO NA HORA) ---
+
+// Teste de Evento
 app.get('/criar-teste', async (req, res) => {
   try {
     const novoEvento = new Evento({
@@ -101,6 +103,21 @@ app.get('/criar-teste', async (req, res) => {
     res.send("Evento de teste criado com sucesso no MongoDB! 🎉");
   } catch (err) {
     res.send("Erro ao criar: " + err);
+  }
+});
+
+// NOVO: Teste de Acesso (Para criar a coleção 'acessos' no Atlas)
+app.get('/teste-acesso', async (req, res) => {
+  try {
+    const teste = new Acesso({
+      ip: "123.456.78.9",
+      navegador: "Teste Manual via Navegador",
+      data: new Date()
+    });
+    await teste.save();
+    res.send("✅ Sucesso! Acesso de teste gravado. Verifique a coleção 'acessos' no MongoDB Atlas.");
+  } catch (err) {
+    res.status(500).send("❌ Erro ao gravar teste: " + err);
   }
 });
 
