@@ -15,21 +15,18 @@ mongoose.connect(mongoURI)
 
 // --- MODELOS (SCHEMAS) ---
 
-// Molde para Acessos (IPs)
 const Acesso = mongoose.model('Acesso', {
   ip: String,
   data: { type: Date, default: Date.now },
   navegador: String
 }, 'acessos');
 
-// Molde para Eventos
 const Evento = mongoose.model('Evento', {
   nome: String,
   escola: String,
   ano: Number
 });
 
-// Molde para Produtos
 const Produto = mongoose.model('Produto', {
   titulo: String,
   preco: String,
@@ -43,12 +40,11 @@ const Produto = mongoose.model('Produto', {
 
 // --- ROTAS DA API ---
 
-// Rota inicial
 app.get('/', (req, res) => {
   res.send('API da UESM rodando com MongoDB! 🚀');
 });
 
-// 1. ROTA PARA SALVAR ACESSO (O React vai chamar essa)
+// 1. ROTA PARA SALVAR ACESSO
 app.post('/acessos', async (req, res) => {
   try {
     const novoAcesso = new Acesso(req.body);
@@ -59,17 +55,27 @@ app.post('/acessos', async (req, res) => {
   }
 });
 
-// 2. ROTA PARA VER ACESSOS (Para você consultar quem entrou)
+// 2. ROTA PARA VER ACESSOS (COM HORÁRIO DE BRASÍLIA FORMATADO)
 app.get('/ver-acessos', async (req, res) => {
   try {
     const lista = await Acesso.find().sort({ data: -1 });
-    res.json(lista);
+    
+    // Mapeamos a lista para adicionar o campo 'dataLocal'
+    const listaFormatada = lista.map(item => {
+      return {
+        ip: item.ip,
+        navegador: item.navegador,
+        dataOriginal: item.data, // Mantém a data original do Mongo
+        dataLocal: item.data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) // Hora de Brasília
+      };
+    });
+
+    res.json(listaFormatada);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar acessos" });
   }
 });
 
-// Rota de Produtos
 app.get('/produtos', async (req, res) => {
   try {
     const produtosDoBanco = await Produto.find();
@@ -79,7 +85,6 @@ app.get('/produtos', async (req, res) => {
   }
 });
 
-// Rota de Eventos
 app.get('/eventos', async (req, res) => {
   try {
     const eventosDoBanco = await Evento.find();
@@ -89,9 +94,8 @@ app.get('/eventos', async (req, res) => {
   }
 });
 
-// --- ROTAS DE TESTE (CRIAM DADOS NO MONGO NA HORA) ---
+// --- ROTAS DE TESTE ---
 
-// Teste de Evento
 app.get('/criar-teste', async (req, res) => {
   try {
     const novoEvento = new Evento({
@@ -106,7 +110,6 @@ app.get('/criar-teste', async (req, res) => {
   }
 });
 
-// NOVO: Teste de Acesso (Para criar a coleção 'acessos' no Atlas)
 app.get('/teste-acesso', async (req, res) => {
   try {
     const teste = new Acesso({
