@@ -148,5 +148,16 @@ app.put('/produtos/:id', async (req, res) => {
   }
 });
 
+// ROTA PARA EXCLUIR PRODUTO
+app.delete('/produtos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Produto.findByIdAndDelete(id);
+    res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao excluir o produto." });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
