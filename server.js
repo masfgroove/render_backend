@@ -60,13 +60,12 @@ app.get('/ver-acessos', async (req, res) => {
   try {
     const lista = await Acesso.find().sort({ data: -1 });
     
-    // Mapeamos a lista para adicionar o campo 'dataLocal'
     const listaFormatada = lista.map(item => {
       return {
         ip: item.ip,
         navegador: item.navegador,
-        dataOriginal: item.data, // Mantém a data original do Mongo
-        dataLocal: item.data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) // Hora de Brasília
+        dataOriginal: item.data,
+        dataLocal: item.data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
       };
     });
 
@@ -76,6 +75,7 @@ app.get('/ver-acessos', async (req, res) => {
   }
 });
 
+// 3. ROTAS DE PRODUTOS (BUSCAR E CADASTRAR)
 app.get('/produtos', async (req, res) => {
   try {
     const produtosDoBanco = await Produto.find();
@@ -85,6 +85,18 @@ app.get('/produtos', async (req, res) => {
   }
 });
 
+// NOVA ROTA: CADASTRAR PRODUTO VIA FORMULÁRIO
+app.post('/produtos', async (req, res) => {
+  try {
+    const novoProduto = new Produto(req.body);
+    await novoProduto.save();
+    res.status(201).json({ mensagem: "Produto cadastrado com sucesso!" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao cadastrar produto" });
+  }
+});
+
+// 4. ROTAS DE EVENTOS
 app.get('/eventos', async (req, res) => {
   try {
     const eventosDoBanco = await Evento.find();
