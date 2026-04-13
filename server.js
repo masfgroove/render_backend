@@ -136,5 +136,17 @@ app.get('/teste-acesso', async (req, res) => {
   }
 });
 
+// ROTA PARA ALTERAR PRODUTO PELO ID
+app.put('/produtos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const atualizacao = req.body;
+    await Produto.findByIdAndUpdate(id, atualizacao);
+    res.json({ mensagem: "Produto atualizado com sucesso! 🔄" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao atualizar produto" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
