@@ -25,7 +25,7 @@ const Evento = mongoose.model('Evento', {
   nome: String,
   escola: String,
   ano: Number
-});
+}, 'eventos');
 
 const Produto = mongoose.model('Produto', {
   titulo: String,
@@ -38,13 +38,23 @@ const Produto = mongoose.model('Produto', {
   garantia: String
 }, 'produtos');
 
+// NOVO MODELO: NOTÍCIAS DA UESM
+const NoticiaUESM = mongoose.model('NoticiaUESM', {
+  titulo: String,
+  subtitulo: String,
+  conteudo: String, // Texto longo da notícia
+  imagem: String,
+  categoria: String,
+  data: { type: Date, default: Date.now }
+}, 'noticias_uesm'); // Nome exato da collection no MongoDB
+
 // --- ROTAS DA API ---
 
 app.get('/', (req, res) => {
   res.send('API da UESM rodando com MongoDB! 🚀');
 });
 
-// 1. ROTA PARA SALVAR ACESSO
+// 1. ROTAS DE ACESSOS
 app.post('/acessos', async (req, res) => {
   try {
     const novoAcesso = new Acesso(req.body);
@@ -55,27 +65,22 @@ app.post('/acessos', async (req, res) => {
   }
 });
 
-// 2. ROTA PARA VER ACESSOS (COM HORÁRIO DE BRASÍLIA FORMATADO)
 app.get('/ver-acessos', async (req, res) => {
   try {
     const lista = await Acesso.find().sort({ data: -1 });
-    
-    const listaFormatada = lista.map(item => {
-      return {
-        ip: item.ip,
-        navegador: item.navegador,
-        dataOriginal: item.data,
-        dataLocal: item.data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-      };
-    });
-
+    const listaFormatada = lista.map(item => ({
+      ip: item.ip,
+      navegador: item.navegador,
+      dataOriginal: item.data,
+      dataLocal: item.data.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+    }));
     res.json(listaFormatada);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar acessos" });
   }
 });
 
-// 3. ROTAS DE PRODUTOS (BUSCAR E CADASTRAR)
+// 2. ROTAS DE PRODUTOS
 app.get('/produtos', async (req, res) => {
   try {
     const produtosDoBanco = await Produto.find();
@@ -85,7 +90,6 @@ app.get('/produtos', async (req, res) => {
   }
 });
 
-// NOVA ROTA: CADASTRAR PRODUTO VIA FORMULÁRIO
 app.post('/produtos', async (req, res) => {
   try {
     const novoProduto = new Produto(req.body);
@@ -96,6 +100,62 @@ app.post('/produtos', async (req, res) => {
   }
 });
 
+app.put('/produtos/:id', async (req, res) => {
+  try {
+    await Produto.findByIdAndUpdate(req.params.id, req.body);
+    res.json({ mensagem: "Produto atualizado com sucesso! 🔄" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao atualizar produto" });
+  }
+});
+
+app.delete('/produtos/:id', async (req, res) => {
+  try {
+    await Produto.findByIdAndDelete(req.params.id);
+    res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao excluir o produto." });
+  }
+});
+
+// 3. NOVAS ROTAS: NOTÍCIAS UESM
+app.get('/noticias-uesm', async (req, res) => {
+  try {
+    const noticias = await NoticiaUESM.find().sort({ data: -1 });
+    res.json(noticias);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar notícias" });
+  }
+});
+
+app.post('/noticias-uesm', async (req, res) => {
+  try {
+    const novaNoticia = new NoticiaUESM(req.body);
+    await novaNoticia.save();
+    res.status(201).json({ mensagem: "Notícia UESM cadastrada com sucesso!" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao cadastrar notícia" });
+  }
+});
+
+app.put('/noticias-uesm/:id', async (req, res) => {
+  try {
+    await NoticiaUESM.findByIdAndUpdate(req.params.id, req.body);
+    res.json({ mensagem: "Notícia atualizada! 🔄" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao atualizar notícia" });
+  }
+});
+
+app.delete('/noticias-uesm/:id', async (req, res) => {
+  try {
+    await NoticiaUESM.findByIdAndDelete(req.params.id);
+    res.json({ mensagem: "Notícia removida! 🗑️" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao excluir notícia" });
+  }
+});
+
 // 4. ROTAS DE EVENTOS
 app.get('/eventos', async (req, res) => {
   try {
@@ -103,59 +163,6 @@ app.get('/eventos', async (req, res) => {
     res.json(eventosDoBanco);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar eventos" });
-  }
-});
-
-// --- ROTAS DE TESTE ---
-
-app.get('/criar-teste', async (req, res) => {
-  try {
-    const novoEvento = new Evento({
-      nome: "Desfile de Maquetes 2026",
-      escola: "União das Escolas de Samba de Maquete",
-      ano: 2026
-    });
-    await novoEvento.save();
-    res.send("Evento de teste criado com sucesso no MongoDB! 🎉");
-  } catch (err) {
-    res.send("Erro ao criar: " + err);
-  }
-});
-
-app.get('/teste-acesso', async (req, res) => {
-  try {
-    const teste = new Acesso({
-      ip: "123.456.78.9",
-      navegador: "Teste Manual via Navegador",
-      data: new Date()
-    });
-    await teste.save();
-    res.send("✅ Sucesso! Acesso de teste gravado. Verifique a coleção 'acessos' no MongoDB Atlas.");
-  } catch (err) {
-    res.status(500).send("❌ Erro ao gravar teste: " + err);
-  }
-});
-
-// ROTA PARA ALTERAR PRODUTO PELO ID
-app.put('/produtos/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const atualizacao = req.body;
-    await Produto.findByIdAndUpdate(id, atualizacao);
-    res.json({ mensagem: "Produto atualizado com sucesso! 🔄" });
-  } catch (err) {
-    res.status(400).json({ error: "Erro ao atualizar produto" });
-  }
-});
-
-// ROTA PARA EXCLUIR PRODUTO
-app.delete('/produtos/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    await Produto.findByIdAndDelete(id);
-    res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
-  } catch (err) {
-    res.status(400).json({ error: "Erro ao excluir o produto." });
   }
 });
 
