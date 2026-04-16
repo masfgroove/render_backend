@@ -38,15 +38,14 @@ const Produto = mongoose.model('Produto', {
   garantia: String
 }, 'produtos');
 
-// NOVO MODELO: NOTÍCIAS DA UESM
 const NoticiaUESM = mongoose.model('NoticiaUESM', {
   titulo: String,
   subtitulo: String,
-  conteudo: String, // Texto longo da notícia
+  conteudo: String, 
   imagem: String,
   categoria: String,
   data: { type: Date, default: Date.now }
-}, 'noticias_uesm'); // Nome exato da collection no MongoDB
+}, 'noticias_uesm');
 
 // --- ROTAS DA API ---
 
@@ -100,31 +99,26 @@ app.post('/produtos', async (req, res) => {
   }
 });
 
-app.put('/produtos/:id', async (req, res) => {
-  try {
-    await Produto.findByIdAndUpdate(req.params.id, req.body);
-    res.json({ mensagem: "Produto atualizado com sucesso! 🔄" });
-  } catch (err) {
-    res.status(400).json({ error: "Erro ao atualizar produto" });
-  }
-});
+// 3. ROTAS: NOTÍCIAS UESM (CORRIGIDAS)
 
-app.delete('/produtos/:id', async (req, res) => {
-  try {
-    await Produto.findByIdAndDelete(req.params.id);
-    res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
-  } catch (err) {
-    res.status(400).json({ error: "Erro ao excluir o produto." });
-  }
-});
-
-// 3. NOVAS ROTAS: NOTÍCIAS UESM
+// ROTA A: Lista todas as notícias
 app.get('/noticias-uesm', async (req, res) => {
   try {
     const noticias = await NoticiaUESM.find().sort({ data: -1 });
     res.json(noticias);
   } catch (err) {
-    res.status(500).json({ error: "Erro ao buscar notícias" });
+    res.status(500).json({ error: "Erro ao buscar lista de notícias" });
+  }
+});
+
+// ROTA B: Busca UMA notícia específica por ID (ESSENCIAL PARA A PÁGINA ABRIR)
+app.get('/noticias-uesm/:id', async (req, res) => {
+  try {
+    const noticia = await NoticiaUESM.findById(req.params.id);
+    if (!noticia) return res.status(404).json({ error: "Notícia não encontrada" });
+    res.json(noticia);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar detalhe da notícia" });
   }
 });
 
