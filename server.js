@@ -79,7 +79,7 @@ app.get('/ver-acessos', async (req, res) => {
   }
 });
 
-// 2. ROTAS DE PRODUTOS
+// 2. ROTAS DE PRODUTOS (ADICIONEI AS QUE FALTAVAM AQUI)
 app.get('/produtos', async (req, res) => {
   try {
     const produtosDoBanco = await Produto.find();
@@ -99,9 +99,27 @@ app.post('/produtos', async (req, res) => {
   }
 });
 
-// 3. ROTAS: NOTÍCIAS UESM (CORRIGIDAS)
+// ROTA PARA ATUALIZAR PRODUTO
+app.put('/produtos/:id', async (req, res) => {
+  try {
+    await Produto.findByIdAndUpdate(req.params.id, req.body);
+    res.json({ mensagem: "Produto atualizado com sucesso! 🔄" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao atualizar produto" });
+  }
+});
 
-// ROTA A: Lista todas as notícias
+// ROTA PARA EXCLUIR PRODUTO (ESSA É A QUE VOCÊ PRECISA AGORA)
+app.delete('/produtos/:id', async (req, res) => {
+  try {
+    await Produto.findByIdAndDelete(req.params.id);
+    res.json({ mensagem: "Produto removido com sucesso! 🗑️" });
+  } catch (err) {
+    res.status(400).json({ error: "Erro ao excluir o produto." });
+  }
+});
+
+// 3. ROTAS: NOTÍCIAS UESM
 app.get('/noticias-uesm', async (req, res) => {
   try {
     const noticias = await NoticiaUESM.find().sort({ data: -1 });
@@ -111,7 +129,6 @@ app.get('/noticias-uesm', async (req, res) => {
   }
 });
 
-// ROTA B: Busca UMA notícia específica por ID (ESSENCIAL PARA A PÁGINA ABRIR)
 app.get('/noticias-uesm/:id', async (req, res) => {
   try {
     const noticia = await NoticiaUESM.findById(req.params.id);
